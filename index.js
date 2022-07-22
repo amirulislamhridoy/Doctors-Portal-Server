@@ -53,7 +53,7 @@ async function run() {
     async function verifyAdmin(req, res, next){
       const email = req.decoded.email
       const user = await userCollection.findOne({email})
-      const admin = user.role === 'admin'
+      const admin = user?.role === 'admin'
       if(admin){
         next()
       }else{
@@ -101,6 +101,19 @@ async function run() {
         return res.status(403).send({ message: "Forbidden" });
       }
     });
+    app.get("/bookingSelectDay", verifyJWT, async (req, res) => {
+      const patient = req.query.patient;
+      const date = req.query.date;
+      const decodedEmail = req.decoded.email;
+
+      if (decodedEmail === patient) {
+        const query = { patient: patient, date: date };
+        const result = await bookingCollection.find(query).toArray();
+        return res.send(result);
+      } else {
+        return res.status(403).send({ message: "Forbidden" });
+      }
+    });
     app.get("/bookingDate", async (req, res) => {
       const patient = req.query.patient;
       const date = req.query.date || "Jul 12, 2022";
@@ -120,7 +133,7 @@ async function run() {
       // }else{
       //   res.send({admin: false})
       // }
-      const isAdmin = user.role === 'admin'
+      const isAdmin = user?.role === 'admin'
       res.send({admin: isAdmin})
     })
     app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
