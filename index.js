@@ -41,6 +41,7 @@ function verifyJWT(req, res, next) {
     }
   });
 }
+
 async function run() {
   try {
     await client.connect();
@@ -48,6 +49,17 @@ async function run() {
     const bookingCollection = client.db("doctors_portal").collection("booking");
     const userCollection = client.db("doctors_portal").collection("user");
     const doctorCollection = client.db("doctors_portal").collection("doctors");
+
+    async function verifyAdmin(req, res, next){
+      const email = req.decoded.email
+      const user = await userCollection.findOne({email})
+      const admin = user.role === 'admin'
+      if(admin){
+        next()
+      }else{
+        return res.status(403).send({message: 'Forbidden'})
+      }
+    }
 
     app.get("/service", async (req, res) => {
       const query = {};
@@ -111,7 +123,7 @@ async function run() {
       const isAdmin = user.role === 'admin'
       res.send({admin: isAdmin})
     })
-    app.get('/doctor', async (req, res) => {
+    app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
       const query = {}
       const doctors = await doctorCollection.find(query).toArray()
       res.send(doctors)
