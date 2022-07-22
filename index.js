@@ -111,6 +111,11 @@ async function run() {
       const isAdmin = user.role === 'admin'
       res.send({admin: isAdmin})
     })
+    app.get('/doctor', async (req, res) => {
+      const query = {}
+      const doctors = await doctorCollection.find(query).toArray()
+      res.send(doctors)
+    })
 
     app.post("/booking", async (req, res) => {
       const booking = req.body;
@@ -160,11 +165,18 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options);
 
       const token = jwt.sign({ email: email }, process.env.ACCESS_KEY_TOKEN, {
-        expiresIn: "1d",
+        expiresIn: "1h"
       });
 
       res.send({ result, token: token });
     });
+
+    app.delete('/doctor/:id', async (req, res) => {
+      const id = req.params.id
+      const query = {_id : ObjectId(id)}
+      const result = await doctorCollection.deleteOne(query)
+      res.send(result)
+    })
   } finally {
     // await client.close()
   }
