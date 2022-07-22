@@ -10,8 +10,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(cors());
 app.use(express.json());
 // app.use(bodyParser.json())
-// hello
+
 // doctors_portal2 in database
+//(server url) => https://doctors-portal-server-2nd-time.herokuapp.com/
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qnrxg.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -43,15 +44,14 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     await client.connect();
-    const serviceCollection = client
-      .db("doctors_portal")
-      .collection("services");
+    const serviceCollection = client.db("doctors_portal").collection("services");
     const bookingCollection = client.db("doctors_portal").collection("booking");
     const userCollection = client.db("doctors_portal").collection("user");
+    const doctorCollection = client.db("doctors_portal").collection("doctors");
 
     app.get("/service", async (req, res) => {
       const query = {};
-      const cursor = serviceCollection.find(query);
+      const cursor = serviceCollection.find(query).project({name: 1});
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -127,6 +127,11 @@ async function run() {
         return res.send({ success: true, result });
       }
     });
+    app.post('/doctor', verifyJWT, async (req, res) =>{
+      const doctor = req.body
+      const result = await doctorCollection.insertOne(doctor)
+      res.send(result)
+    })
 
     app.put("/user/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -155,7 +160,7 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options);
 
       const token = jwt.sign({ email: email }, process.env.ACCESS_KEY_TOKEN, {
-        expiresIn: "1h",
+        expiresIn: "5s",
       });
 
       res.send({ result, token: token });
