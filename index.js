@@ -160,7 +160,7 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options);
 
       const token = jwt.sign({ email: email }, process.env.ACCESS_KEY_TOKEN, {
-        expiresIn: "5s",
+        expiresIn: "1h",
       });
 
       res.send({ result, token: token });
