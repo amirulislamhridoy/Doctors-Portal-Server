@@ -51,6 +51,7 @@ async function run() {
     const bookingCollection = client.db("doctors_portal").collection("booking");
     const userCollection = client.db("doctors_portal").collection("user");
     const doctorCollection = client.db("doctors_portal").collection("doctors");
+    const paymentCollection = client.db("doctors_portal").collection("payment");
 
     async function verifyAdmin(req, res, next){
       const email = req.decoded.email
@@ -213,6 +214,20 @@ async function run() {
 
       res.send({ result, token: token });
     });
+    app.patch('/booking/:id', async (req, res) => {
+      const id = req.params.id;
+      const patient = req.body
+      const filter = {_id: ObjectId(id)}
+      const updateDoc = {
+        $set: {
+          paid: true,
+          transactionId: patient.transactionId
+        }
+      }
+      const result = await paymentCollection.insertOne(patient)
+      const updatedBooking = await bookingCollection.updateOne(filter, updateDoc);
+      res.send(updatedBooking)
+    })
 
     app.delete('/doctor/:id', async (req, res) => {
       const id = req.params.id
