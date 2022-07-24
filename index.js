@@ -6,10 +6,12 @@ require("dotenv").config();
 let jwt = require("jsonwebtoken");
 // var bodyParser = require('body-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_PUBLIC_KEY);
 
 app.use(cors());
 app.use(express.json());
 // app.use(bodyParser.json())
+app.use(express.static("public"));
 
 // doctors_portal2 in database
 //(server url) => https://doctors-portal-server-2nd-time.herokuapp.com/
@@ -116,11 +118,16 @@ async function run() {
     });
     app.get("/bookingDate", async (req, res) => {
       const patient = req.query.patient;
-      const date = req.query.date || "Jul 12, 2022";
+      const date = req.query.date || "Jul 23, 2022";
       const query = { patient, date };
       const result = await bookingCollection.find(query).toArray();
       res.send(result);
     });
+    app.get('/booking/:id', async (req, res) => {
+      const id = req.params.id
+      const result = await bookingCollection.findOne({_id: ObjectId(id)})
+      res.send(result)
+    })
     app.get("/users", async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
@@ -161,6 +168,17 @@ async function run() {
       const doctor = req.body
       const result = await doctorCollection.insertOne(doctor)
       res.send(result)
+    })
+    app.post('/create-payment-intent', async (req, res) => {
+      const price = req.body.price
+      const amount = price * 100
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        automatic_payment_methods: {enabled: true,},
+        // payment_method_types: ["card"],
+      });
+      res.send({clientSecret: paymentIntent.client_secret})
     })
 
     app.put("/user/admin/:email", verifyJWT, async (req, res) => {
