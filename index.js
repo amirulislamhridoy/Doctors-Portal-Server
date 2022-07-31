@@ -7,7 +7,7 @@ let jwt = require("jsonwebtoken");
 // var bodyParser = require('body-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_PUBLIC_KEY);
-
+// 10
 app.use(cors());
 app.use(express.json());
 // app.use(bodyParser.json())
